@@ -20,35 +20,29 @@ class DiarySystem:
         with open(self.data_file, 'w', encoding='utf-8') as f:
             json.dump(self.entries, f, ensure_ascii=False, indent=2)
     
-    def add_entry(self, entry_type: str, content: str, tags: List[str] = None, mood: str = None):
+    def add_entry(self, entry_type: str, content: str):
         """添加日记条目
         
         Args:
             entry_type: 条目类型 (activity/event/profile)
             content: 内容
-            tags: 标签列表
-            mood: 心情状态
         """
         entry = {
             "id": len(self.entries) + 1,
             "type": entry_type,
             "content": content,
-            "tags": tags or [],
-            "mood": mood,
             "date": datetime.datetime.now().strftime("%Y-%m-%d")
         }
         self.entries.append(entry)
         self.save_data()
         print(f"日记条目已添加 (ID: {entry['id']})")
     
-    def search_entries(self, keyword: str = None, entry_type: str = None, 
-                      tags: List[str] = None, date: str = None) -> List[Dict[str, Any]]:
+    def search_entries(self, keyword: str = None, entry_type: str = None, date: str = None) -> List[Dict[str, Any]]:
         """搜索日记条目
         
         Args:
             keyword: 关键词
             entry_type: 条目类型
-            tags: 标签列表
             date: 日期 (YYYY-MM-DD)
             
         Returns:
@@ -62,10 +56,6 @@ class DiarySystem:
         if entry_type:
             results = [entry for entry in results if entry['type'] == entry_type]
 
-        if tags:
-            results = [entry for entry in results 
-                      if any(tag in entry['tags'] for tag in tags)]
-        
         if keyword:
             results = [entry for entry in results 
                       if keyword.lower() in entry['content'].lower()]
@@ -78,10 +68,6 @@ class DiarySystem:
         print(f"ID: {entry['id']}")
         print(f"类型: {entry['type']}")
         print(f"日期: {entry['date']}")
-        if entry['mood']:
-            print(f"心情: {entry['mood']}")
-        if entry['tags']:
-            print(f"标签: {', '.join(entry['tags'])}")
         print(f"\n内容:\n{entry['content']}")
         print(f"{'='*50}")
     
@@ -122,11 +108,8 @@ def main():
             
             entry_type = input("条目类型: ").strip()
             content = input("内容: ").strip()
-            tags_input = input("标签 (用逗号分隔): ").strip()
-            tags = [tag.strip() for tag in tags_input.split(',')] if tags_input else []
-            mood = input("心情状态 (可选): ").strip() or None
             
-            diary.add_entry(entry_type, content, tags, mood)
+            diary.add_entry(entry_type, content)
         
         elif choice == '2':
             print("\n搜索日记条目")
@@ -134,11 +117,9 @@ def main():
             
             keyword = input("关键词: ").strip() or None
             entry_type = input("类型: ").strip() or None
-            tags_input = input("标签 (用逗号分隔): ").strip()
-            tags = [tag.strip() for tag in tags_input.split(',')] if tags_input else None
             date = input("日期 (YYYY-MM-DD): ").strip() or None
             
-            results = diary.search_entries(keyword, entry_type, tags, date)
+            results = diary.search_entries(keyword, entry_type, date)
             
             if results:
                 print(f"\n找到 {len(results)} 个匹配的条目:")

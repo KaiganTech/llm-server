@@ -113,6 +113,7 @@ def call_api_stream(system_prompt, user_prompt, temperature, max_tokens, model_n
     except Exception as e:
         print(f"其他错误: {e}")
         yield None
+        
 # 非流式使用示例
 def main():
     system_prompt = "请回答用户的问题"

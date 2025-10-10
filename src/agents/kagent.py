@@ -22,6 +22,18 @@ model_name="Qwen2.5-72B-Instruct-GGUF"
 
 class KAgent:
     def __init__(self):
+        self.emotion_prompt = """
+## 角色
+你是一位情绪识别专家，负责分析文本中的情绪状态。
+
+## 任务与原则
+1. 请从以下选项中选择最合适的情绪：[喜悦、信任、恐惧、惊讶、悲伤、厌恶、愤怒、期待]
+2. valence: 积极情绪接近 +1, 消极情绪接近 -1, 中性为 0
+3. arousal: 高能量情绪接近 1, 低能量情绪接近 0
+
+## 输出格式
+仅输出一个json: {"emotion": "", "valence": , "arousal": }
+"""
         self.graph = self._build_graph()
         self._visualize_graph()
     
@@ -61,7 +73,9 @@ class KAgent:
     def _receive_input(self, state: AgentState) -> AgentState:
         """接收用户输入"""
         print("====用户输入==== ", state["messages"])
-        state["conversation_history"].append({"role": "human", "content": state["messages"][-1].content})
+        emotion_response = call_api(system_prompt=self.emotion_prompt, user_prompt=state["messages"][-1].content, temperature=0.1, max_tokens=32768, model_name="Qwen2.5-72B-Instruct-GGUF")
+        emotion_response = json.loads(emotion_response)
+        state["conversation_history"].append({"role": "human", "content": state["messages"][-1].content, "emotion": emotion_response["emotion"]})
         return state
     
     def _analyze_intent(self, state: AgentState) -> AgentState:
@@ -165,7 +179,9 @@ class KAgent:
         print("====生成回应==== ", response)
         # 添加AI回应到消息列表
         state["messages"].append(AIMessage(content=response))
-        state["conversation_history"].append({"role": "ai", "content": response})
+        emotion_response = call_api(system_prompt=self.emotion_prompt, user_prompt=response, temperature=0.1, max_tokens=32768, model_name="Qwen2.5-72B-Instruct-GGUF")
+        emotion_response = json.loads(emotion_response)
+        state["conversation_history"].append({"role": "ai", "content": response, "emotion": emotion_response["emotion"]})
        
         return state
     
