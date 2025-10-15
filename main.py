@@ -7,11 +7,11 @@ from pydantic import BaseModel
 
 import sys
 sys.path.append('/mnt/projects/llm-server')
-from src.agents.kagent import KAgent
+from src.agents.kagentv1 import KAgent
 from src.diary_system.extract import extract_activity, extract_event, extract_profile
 from src.diary_system.knote import DiarySystem
 from celery_config import celery_app
-from src.tasks import process_chat_task, organize_knotes_task
+from src.tasks import process_chat_task, process_chat_stream_task, organize_knotes_task, get_stream_task_output
 
 current_day_note_path = '/mnt/projects/llm-server/src/diary_system/current_day_history.json'
 app = FastAPI()
@@ -60,35 +60,66 @@ async def user_question(input: user_question_format):
     return {
         "task_id": task.id,
         "status": "processing",
-        "message": "任务已提交，正在异步处理中"
+        "message": "任务已提交，正在异步处理中",
+        "stream_support": True
+    }
+
+# 流式异步问答端点
+@app.post("/ask/stream")
+async def user_question_stream(input: user_question_format):
+    """流式异步处理用户问题"""
+    print("流式输入：", input.message)
+    
+    # 检查文件是否存在，不存在则创建
+    if not os.path.exists(current_day_note_path):
+        with open(current_day_note_path, 'w', encoding='utf-8') as f:
+            json.dump({'conversation_history': []}, f, ensure_ascii=False, indent=4)
+    
+    # 检查文件是否为空
+    if os.path.getsize(current_day_note_path) == 0:
+        with open(current_day_note_path, 'w', encoding='utf-8') as f:
+            json.dump({'conversation_history': []}, f, ensure_ascii=False, indent=4)
+
+    # 读取对话历史
+    with open(current_day_note_path, 'r', encoding='utf-8') as f:
+        conversation_history = json.load(f)['conversation_history']
+
+    # 异步调用流式Celery任务
+    task = process_chat_stream_task.delay(input.message, conversation_history)
+    
+    return {
+        "task_id": task.id,
+        "status": "Unknown",
+        "message": "流式任务已提交，可实时获取推理进度",
+        "stream_support": True
     }
 
 # 任务状态查询端点
 @app.get("/task/{task_id}")
 async def get_task_status(task_id: str):
-    """查询任务状态"""
+    """查询任务状态(支持实时流式输出)"""
     task_result = celery_app.AsyncResult(task_id)
+    print(f"task_result: {task_result}")
+    # 检查是否为流式任务并获取实时输出
+    stream_output = get_stream_task_output(task_id)
+    print(f"stream_output: {stream_output}")
+    
+    response = {
+        'task_id': task_id,
+        'state': task_result.state,
+    }
     
     if task_result.state == 'PENDING':
-        response = {
-            'task_id': task_id,
-            'state': task_result.state,
-            'status': '任务正在等待处理'
-        }
+        response['status'] = '任务正在等待处理'
     elif task_result.state == 'SUCCESS':
-        response = {
-            'task_id': task_id,
-            'state': task_result.state,
-            'status': '任务已完成',
-            'result': task_result.result
-        }
-    else:  # FAILURE或其他状态
-        response = {
-            'task_id': task_id,
-            'state': task_result.state,
-            'status': '任务处理中或失败',
-            'result': str(task_result.info) if task_result.info else None
-        }
+        response['status'] = '任务已完成'
+        response['result'] = task_result.info
+    elif task_result.state == 'STREAMING':  # STREAMING
+        response['status'] = '任务处理中'
+        response['result'] = task_result.info 
+    else:
+        response['status'] = '任务失败'
+        response['result'] = task_result.info 
     
     return response
 

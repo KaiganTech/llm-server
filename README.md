@@ -9,6 +9,11 @@
 
 ## 安装和启动
 
+### 0. 模型准备
+```bash
+VLLM_LOGGING_CONFIG_PATH=/mnt/projects/llm-server/logs/vllm_serve/logs.json vllm serve qwen3-4b-instruct-2507-fp8 --host 0.0.0.0 --port 8080 --gpu-memory-utilization 0.8 --tensor-parallel-size 2
+```
+
 ### 1. 安装依赖
 ```bash
 pip install -r requirements.txt
@@ -36,7 +41,7 @@ celery -A celery_config worker --loglevel=info --queues=background_queue --concu
 
 ### 4. 启动FastAPI服务
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 10001 --reload
 ```
 
 ## API接口
@@ -62,11 +67,7 @@ python src/monitor.py
 
 # 查看Celery状态
 celery -A celery_config status
-
-# 任务删除
-redis-cli -n 0 KEYS "celery-task-meta*" | xargs redis-cli -n 0 DEL
 ```
-
 ## 故障排除
 
 1. **Redis连接失败**: 检查Redis服务是否运行

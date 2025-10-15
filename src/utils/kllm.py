@@ -14,7 +14,7 @@ def call_api(system_prompt, user_prompt, temperature, max_tokens, model_name):
     - 生成的文本响应
     """
     
-    url = "http://127.0.0.1:8080/v1/chat/completions"
+    url = "http://localhost:8080/v1/chat/completions"
     
     headers = {
         "Content-Type": "application/json"
@@ -66,7 +66,7 @@ def call_api_stream(system_prompt, user_prompt, temperature, max_tokens, model_n
     - 生成器，每次yield一个token
     """
     
-    url = "http://127.0.0.1:8080/v1/chat/completions"
+    url = "http://localhost:8080/v1/chat/completions"
     
     headers = {
         "Content-Type": "application/json"
@@ -133,10 +133,12 @@ def main():
 # 流式使用示例
 def main_stream():
     system_prompt = "请回答用户的问题"
-    user_prompt = "你好"
+    user_prompt = "请给我讲个故事"
     temperature = 0.1
-    max_tokens = 32768
-    model_name = "ggml-model-fp16"
+    max_tokens = 20000
+    model_name = "qwen3-4b-instruct-2507-fp8"   
+    # qwen3-4b-instruct-2507-fp8
+    # ggml-model-fp16
     
     for chunk in call_api_stream(system_prompt, user_prompt, temperature, max_tokens, model_name):
         if chunk:

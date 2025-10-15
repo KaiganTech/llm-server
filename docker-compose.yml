@@ -10,16 +10,18 @@ services:
       - redis_data:/data/redis
     command: redis-server --appendonly yes
 
-  # 可选：Redis管理界面
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: redis_commander
-    environment:
-      - REDIS_HOSTS=local:redis:6379
+  # Redis Web管理界面 - 使用更稳定的phpRedisAdmin
+  redis-admin:
+    image: erikdubbelboer/phpredisadmin:latest
+    container_name: redis_admin
     ports:
-      - "8081:8081"
+      - "8081:80"
+    environment:
+      - REDIS_1_HOST=redis
+      - REDIS_1_PORT=6379
     depends_on:
       - redis
+    restart: unless-stopped
 
 volumes:
   redis_data:

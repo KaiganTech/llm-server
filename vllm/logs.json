@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "detailed": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+      "datefmt": "%Y-%m-%d %H:%M:%S"
+    },
+    "simple": {
+      "format": "%(asctime)s - %(levelname)s - %(message)s",
+      "datefmt": "%Y-%m-%d %H:%M:%S"
+    },
+    "access": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+      "datefmt": "%Y-%m-%d %H:%M:%S"
+    }
+  },
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "level": "INFO",
+      "formatter": "simple",
+      "stream": "ext://sys.stdout"
+    },
+    "file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "DEBUG",
+      "formatter": "detailed",
+      "filename": "/mnt/projects/llm-server/logs/vllm_serve/vllm_service.log",
+      "maxBytes": 10485760,
+      "backupCount": 5,
+      "encoding": "utf8"
+    },
+    "error_file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "ERROR",
+      "formatter": "detailed",
+      "filename": "/mnt/projects/llm-server/logs/vllm_serve/vllm_errors.log",
+      "maxBytes": 10485760,
+      "backupCount": 5,
+      "encoding": "utf8"
+    },
+    "access_file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "INFO",
+      "formatter": "access",
+      "filename": "/mnt/projects/llm-server/logs/vllm_serve/vllm_access.log",
+      "maxBytes": 10485760,
+      "backupCount": 5,
+      "encoding": "utf8"
+    },
+    "performance_file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "INFO",
+      "formatter": "simple",
+      "filename": "/mnt/projects/llm-server/logs/vllm_serve/vllm_performance.log",
+      "maxBytes": 10485760,
+      "backupCount": 5,
+      "encoding": "utf8"
+    }
+  },
+  "loggers": {
+    "vllm": {
+      "level": "INFO",
+      "handlers": ["console", "file", "error_file"],
+      "propagate": false
+    },
+    "vllm.engine": {
+      "level": "DEBUG",
+      "handlers": ["file", "performance_file"],
+      "propagate": false
+    },
+    "vllm.model_executor": {
+      "level": "DEBUG",
+      "handlers": ["file"],
+      "propagate": false
+    },
+    "vllm.worker": {
+      "level": "INFO",
+      "handlers": ["file"],
+      "propagate": false
+    },
+    "vllm.entrypoints.openai": {
+      "level": "INFO",
+      "handlers": ["access_file"],
+      "propagate": false
+    },
+    "uvicorn": {
+      "level": "INFO",
+      "handlers": ["console", "file"],
+      "propagate": false
+    },
+    "uvicorn.access": {
+      "level": "INFO",
+      "handlers": ["access_file"],
+      "propagate": false
+    }
+  },
+  "root": {
+    "level": "WARNING",
+    "handlers": ["console", "file"]
+  }
+}
