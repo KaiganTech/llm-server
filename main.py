@@ -12,6 +12,7 @@ from src.diary_system.extract import extract_activity, extract_event, extract_pr
 from src.diary_system.knote import DiarySystem
 from celery_config import celery_app
 from src.tasks import process_chat_task, process_chat_stream_task, organize_knotes_task, get_stream_task_output
+from src.utils.file_oprator import safe_file_operation
 
 current_day_note_path = '/mnt/projects/llm-server/src/diary_system/current_day_history.json'
 app = FastAPI()
@@ -40,19 +41,8 @@ async def user_question(input: user_question_format):
     """异步处理用户问题"""
     print("输入：", input.message)
     
-    # 检查文件是否存在，不存在则创建
-    if not os.path.exists(current_day_note_path):
-        with open(current_day_note_path, 'w', encoding='utf-8') as f:
-            json.dump({'conversation_history': []}, f, ensure_ascii=False, indent=4)
-    
-    # 检查文件是否为空
-    if os.path.getsize(current_day_note_path) == 0:
-        with open(current_day_note_path, 'w', encoding='utf-8') as f:
-            json.dump({'conversation_history': []}, f, ensure_ascii=False, indent=4)
-
-    # 读取对话历史
-    with open(current_day_note_path, 'r', encoding='utf-8') as f:
-        conversation_history = json.load(f)['conversation_history']
+    # 使用线程安全的文件操作读取对话历史
+    conversation_history = safe_file_operation('read', current_day_note_path)
 
     # 异步调用Celery任务
     task = process_chat_task.delay(input.message, conversation_history)
@@ -70,20 +60,10 @@ async def user_question_stream(input: user_question_format):
     """流式异步处理用户问题"""
     print("流式输入：", input.message)
     
-    # 检查文件是否存在，不存在则创建
-    if not os.path.exists(current_day_note_path):
-        with open(current_day_note_path, 'w', encoding='utf-8') as f:
-            json.dump({'conversation_history': []}, f, ensure_ascii=False, indent=4)
-    
-    # 检查文件是否为空
-    if os.path.getsize(current_day_note_path) == 0:
-        with open(current_day_note_path, 'w', encoding='utf-8') as f:
-            json.dump({'conversation_history': []}, f, ensure_ascii=False, indent=4)
+    # 使用线程安全的文件操作读取对话历史
+    conversation_history = safe_file_operation('read', current_day_note_path)
 
-    # 读取对话历史
-    with open(current_day_note_path, 'r', encoding='utf-8') as f:
-        conversation_history = json.load(f)['conversation_history']
-
+    print(f"对话历史：{conversation_history}")
     # 异步调用流式Celery任务
     task = process_chat_stream_task.delay(input.message, conversation_history)
     

@@ -68,8 +68,8 @@ class KAgent:
         # 只保留最近对话以减少token消耗
         recent_history = conversation_history[:]  # XX全轮次的对话
         history_str = "\n".join([
-            f"{msg['role']}: {msg['content']}" + 
-            (f" [情绪: {msg.get('emotion', '未知')}]" if msg.get('emotion') else "")
+            f"{msg['role']}: {msg['content']}" 
+            # (f" [情绪: {msg.get('emotion', '未知')}]" if msg.get('emotion') else "")
             for msg in recent_history
         ])
         

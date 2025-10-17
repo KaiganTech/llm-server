@@ -14,6 +14,7 @@ sys.path.append('/mnt/projects/llm-server')
 from src.agents.kagentv1 import KAgent
 from src.diary_system.extract import extract_activity, extract_event, extract_profile
 from src.diary_system.knote import DiarySystem
+from src.utils.file_oprator import safe_file_operation
 
 # 全局变量
 current_day_note_path = '/mnt/projects/llm-server/src/diary_system/current_day_history.json'
@@ -31,7 +32,7 @@ def process_chat_task(message, conversation_history):
         # 调用KAgent进行聊天处理
         answer = agent.chat(message, conversation_history)
         # 保存到文件
-        save_conversation_history(conversation_history)
+        safe_file_operation('write', current_day_note_path, conversation_history)
         
         return {
             'status': 'success',
@@ -89,7 +90,16 @@ def process_chat_stream_task(message, conversation_history):
         full_answer = ''.join(answer_chunks)
         
         # 保存到文件
-        save_conversation_history(conversation_history)
+        conversation_history.append({
+            'role': 'user',
+            'content': message
+        })
+        conversation_history.append({
+            'role': 'assistant',
+            'content': full_answer
+        })
+        print(f"[{datetime.now()}] 保存对话历史, 长度：{len(conversation_history)}...")
+        safe_file_operation('write', current_day_note_path, conversation_history)
 
         return {
             'status': 'success',
@@ -98,7 +108,6 @@ def process_chat_stream_task(message, conversation_history):
             'stream_processed': True
         }
     except Exception as e:
-
         return {
             'status': 'error',
             'error': str(e),
@@ -118,10 +127,9 @@ def organize_knotes_task():
             return {'status': 'error', 'error': '对话历史文件不存在'}
         
         # 读取对话历史
-        with open(current_day_note_path, 'r', encoding='utf-8') as f:
-            conversation_history = json.load(f)['conversation_history']
+        safe_file_operation('read', current_day_note_path, None)
         
-        if not conversation_history:
+        if len(conversation_history) == 0:
             return {'status': 'success', 'message': '没有需要整理的对话历史'}
         
         # 提取信息
@@ -136,7 +144,7 @@ def organize_knotes_task():
         diary.add_entry('profile', profile_content)
         
         # 清空当天的对话历史
-        save_conversation_history([])
+        safe_file_operation('write', current_day_note_path, [])
         
         return {
             'status': 'success',
@@ -150,12 +158,6 @@ def organize_knotes_task():
             'timestamp': datetime.now().isoformat()
         }
 
-def save_conversation_history(conversation_history):
-    """
-    保存对话历史到文件
-    """
-    with open(current_day_note_path, 'w', encoding='utf-8') as f:
-        json.dump({'conversation_history': conversation_history}, f, ensure_ascii=False, indent=4)
 
 def get_stream_task_output(task_id: str):
     """

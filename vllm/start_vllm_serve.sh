@@ -6,6 +6,7 @@
 # 设置环境变量
 export VLLM_LOGGING_CONFIG_PATH="/mnt/projects/llm-server/vllm/logs.json"
 export VLLM_LOGGING_LEVEL="INFO"
+export VLLM_WORKER_MULTIPROC_METHOD="spawn"  # 避免fork内存问题
 
 # 模型配置
 MODEL_PATH="/mnt/models/qwen3-4b-instruct-2507-fp8"
@@ -15,11 +16,11 @@ PORT="8080"
 # 性能优化配置
 GPU_MEMORY_UTILIZATION="0.8"
 TENSOR_PARALLEL_SIZE="2"
-MAX_NUM_SEQS="256"           # 增加最大并发序列数
-MAX_MODEL_LEN="32768"        # 最大模型长度
+MAX_NUM_SEQS="256"           # 减少最大并发序列数以优化长上下文
+MAX_MODEL_LEN="16384"        # 减少最大模型长度以提升性能
 BLOCK_SIZE="16"              # KV缓存块大小
 ENABLE_PREFIX_CACHING="true" # 启用前缀缓存
-SWAP_SPACE="4"               # 交换空间大小(GB)
+SWAP_SPACE="16"              # 交换空间大小(GB)
 
 # 并发优化配置
 MAX_PARALLEL_LOADING_WORKERS="4" # 并行加载工作线程数

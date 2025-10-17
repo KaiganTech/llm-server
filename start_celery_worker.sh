@@ -15,7 +15,7 @@ mkdir -p "$LOG_DIR"
 
 # 启动聊天队列worker
 echo "启动聊天队列Worker..."
-celery -A celery_config worker --loglevel=info --queues=chat_queue --concurrency=40 --hostname=worker1@%h --logfile="$LOG_DIR/worker1.log" &
+celery -A celery_config worker --loglevel=info --queues=chat_queue --concurrency=96 --hostname=worker1@%h --logfile="$LOG_DIR/worker1.log" &
 WORKER1_PID=$!
 echo "聊天队列Worker PID: $WORKER1_PID"
 

@@ -29,17 +29,18 @@ celery_app.conf.update(
     task_default_queue='default',
     task_default_exchange='llm_server',
     task_default_routing_key='default',
-    worker_prefetch_multiplier=50,  # 控制并发度
+    worker_prefetch_multiplier=100,  # 控制并发度
     worker_max_tasks_per_child=500,  # 防止内存泄漏
-    task_acks_late=False,  # 立即确认任务，避免重复执行
+    task_acks_late=False,  # 任务完成后无需确认
     worker_disable_rate_limits=True,  # 禁用速率限制以提高性能
-    task_time_limit=300,  # 任务超时时间（秒）
-    task_soft_time_limit=240,  # 软超时时间（秒）
+    task_time_limit=60,  # 任务超时时间（秒）
+    task_soft_time_limit=50,  # 软超时时间（秒）
     broker_connection_retry_on_startup=True,  # 启动时重试连接
     task_ignore_result=False,  # 保留结果用于状态查询
     task_store_errors_even_if_ignored=True,  # 存储错误信息
     worker_send_task_events=True,  # 启用任务事件
     task_send_sent_event=True,  # 发送任务事件
+    worker_direct=True # 直接发送任务给空闲Worker
 )
 
 # 自动发现任务

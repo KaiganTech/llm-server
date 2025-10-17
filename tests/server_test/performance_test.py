@@ -239,8 +239,13 @@ class StreamPerformanceTester:
             print("❌ 没有测试结果")
             return
         
-        successful_requests = [r for r in results if r.get("success", False)]
-        failed_requests = [r for r in results if not r.get("success", False)]
+        # 过滤掉None值，防止AttributeError
+        valid_results = [r for r in results if r is not None]
+        if len(valid_results) < len(results):
+            print(f"⚠️  发现 {len(results) - len(valid_results)} 个无效结果(None)，已过滤")
+        
+        successful_requests = [r for r in valid_results if r.get("success", False)]
+        failed_requests = [r for r in valid_results if not r.get("success", False)]
         
         success_rate = len(successful_requests) / len(results) * 100
         
